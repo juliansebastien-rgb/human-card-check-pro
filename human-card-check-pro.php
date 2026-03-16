@@ -3,7 +3,7 @@
  * Plugin Name: Human Card Check Pro
  * Plugin URI: https://github.com/juliansebastien-rgb/human-card-check
  * Description: Pro trust scoring addon for Human Card Check.
- * Version: 0.1.2
+ * Version: 0.2.0
  * Author: Le Labo d'Azertaf
  * Requires at least: 6.0
  * Requires PHP: 7.4
@@ -17,11 +17,10 @@ if (!defined('ABSPATH')) {
 }
 
 final class Human_Card_Check_Pro {
-    private const VERSION = '0.1.2';
+    private const VERSION = '0.2.0';
     private const DEFAULT_PAYMENT_LINK = 'https://buy.stripe.com/cNidR29Lz7OV8cN2Hj8k800';
     private const LOG_TABLE_SUFFIX = 'hcc_pro_logs';
     private const SERVICE_URL_OPTION = 'human_card_check_pro_service_url';
-    private const SERVICE_KEY_OPTION = 'human_card_check_pro_service_key';
     private const MIN_SCORE_OPTION = 'human_card_check_pro_min_score';
     private const REVIEW_SCORE_OPTION = 'human_card_check_pro_review_score';
     private const REQUEST_TIMEOUT_OPTION = 'human_card_check_pro_timeout';
@@ -61,16 +60,6 @@ final class Human_Card_Check_Pro {
 
         register_setting(
             'human_card_check_pro_settings',
-            self::SERVICE_KEY_OPTION,
-            [
-                'type' => 'string',
-                'sanitize_callback' => [$this, 'sanitize_service_key'],
-                'default' => '',
-            ]
-        );
-
-        register_setting(
-            'human_card_check_pro_settings',
             self::MIN_SCORE_OPTION,
             [
                 'type' => 'integer',
@@ -98,10 +87,6 @@ final class Human_Card_Check_Pro {
                 'default' => 10,
             ]
         );
-    }
-
-    public function sanitize_service_key($value): string {
-        return is_string($value) ? trim($value) : '';
     }
 
     public function sanitize_score($value): int {
@@ -172,12 +157,6 @@ final class Human_Card_Check_Pro {
                         <td>
                             <input type="text" class="regular-text" id="hcc_pro_service_url" value="<?php echo esc_attr($this->get_service_url()); ?>" readonly disabled />
                             <p class="description">This service URL is managed by the plugin.</p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th scope="row"><label for="hcc_pro_service_key">Trust service API key</label></th>
-                        <td>
-                            <input type="password" class="regular-text" id="hcc_pro_service_key" name="<?php echo esc_attr(self::SERVICE_KEY_OPTION); ?>" value="<?php echo esc_attr($this->get_service_key()); ?>" autocomplete="off" />
                         </td>
                     </tr>
                     <tr>
@@ -324,7 +303,6 @@ final class Human_Card_Check_Pro {
                 'timeout' => $this->get_request_timeout(),
                 'headers' => [
                     'Content-Type' => 'application/json',
-                    'X-HCC-Service-Key' => $this->get_service_key(),
                 ],
                 'body' => wp_json_encode($body),
             ]
@@ -375,7 +353,6 @@ final class Human_Card_Check_Pro {
                 'timeout' => $this->get_request_timeout(),
                 'headers' => [
                     'Content-Type' => 'application/json',
-                    'X-HCC-Service-Key' => $this->get_service_key(),
                 ],
                 'body' => wp_json_encode([
                     'license_token' => $token,
@@ -472,11 +449,6 @@ final class Human_Card_Check_Pro {
     private function get_service_url(): string {
         $value = get_option(self::SERVICE_URL_OPTION, 'https://trust.mapage-wp.online');
         return is_string($value) && $value !== '' ? untrailingslashit($value) : 'https://trust.mapage-wp.online';
-    }
-
-    private function get_service_key(): string {
-        $value = get_option(self::SERVICE_KEY_OPTION, '');
-        return is_string($value) ? $value : '';
     }
 
     private function get_min_score(): int {

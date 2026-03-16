@@ -20,7 +20,6 @@ It adds:
 In `Settings > Human Card Check Pro` you can configure:
 
 - trust service URL
-- service API key
 - minimum allow score
 - review threshold
 - request timeout
