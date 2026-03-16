@@ -3,7 +3,7 @@
  * Plugin Name: Human Card Check Pro
  * Plugin URI: https://github.com/juliansebastien-rgb/human-card-check
  * Description: Pro trust scoring addon for Human Card Check.
- * Version: 0.1.0
+ * Version: 0.1.2
  * Author: Le Labo d'Azertaf
  * Requires at least: 6.0
  * Requires PHP: 7.4
@@ -17,7 +17,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Human_Card_Check_Pro {
-    private const VERSION = '0.1.0';
+    private const VERSION = '0.1.2';
     private const DEFAULT_PAYMENT_LINK = 'https://buy.stripe.com/cNidR29Lz7OV8cN2Hj8k800';
     private const LOG_TABLE_SUFFIX = 'hcc_pro_logs';
     private const SERVICE_URL_OPTION = 'human_card_check_pro_service_url';
@@ -170,8 +170,8 @@ final class Human_Card_Check_Pro {
                     <tr>
                         <th scope="row"><label for="hcc_pro_service_url">Trust service URL</label></th>
                         <td>
-                            <input type="url" class="regular-text" id="hcc_pro_service_url" name="<?php echo esc_attr(self::SERVICE_URL_OPTION); ?>" value="<?php echo esc_attr($this->get_service_url()); ?>" />
-                            <p class="description">Example: https://trust.mapage-wp.online</p>
+                            <input type="text" class="regular-text" id="hcc_pro_service_url" value="<?php echo esc_attr($this->get_service_url()); ?>" readonly disabled />
+                            <p class="description">This service URL is managed by the plugin.</p>
                         </td>
                     </tr>
                     <tr>
