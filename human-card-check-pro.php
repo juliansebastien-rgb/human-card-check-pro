@@ -148,8 +148,8 @@ final class Human_Card_Check_Pro {
         $payment_link = $this->get_payment_link();
         ?>
         <div class="wrap">
-            <?php $this->render_admin_branding(); ?>
             <h1>Human Card Check Pro</h1>
+            <?php $this->render_admin_branding(); ?>
             <form method="post" action="options.php">
                 <?php settings_fields('human_card_check_pro_settings'); ?>
                 <table class="form-table" role="presentation">
