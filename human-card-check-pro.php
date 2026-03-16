@@ -3,7 +3,7 @@
  * Plugin Name: Human Card Check Pro
  * Plugin URI: https://github.com/juliansebastien-rgb/human-card-check
  * Description: Pro trust scoring addon for Human Card Check.
- * Version: 0.2.0
+ * Version: 0.2.2
  * Author: Le Labo d'Azertaf
  * Requires at least: 6.0
  * Requires PHP: 7.4
@@ -17,7 +17,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Human_Card_Check_Pro {
-    private const VERSION = '0.2.0';
+    private const VERSION = '0.2.2';
     private const DEFAULT_PAYMENT_LINK = 'https://buy.stripe.com/cNidR29Lz7OV8cN2Hj8k800';
     private const LOG_TABLE_SUFFIX = 'hcc_pro_logs';
     private const SERVICE_URL_OPTION = 'human_card_check_pro_service_url';
@@ -148,6 +148,7 @@ final class Human_Card_Check_Pro {
         $payment_link = $this->get_payment_link();
         ?>
         <div class="wrap">
+            <?php $this->render_admin_branding(); ?>
             <h1>Human Card Check Pro</h1>
             <form method="post" action="options.php">
                 <?php settings_fields('human_card_check_pro_settings'); ?>
@@ -187,6 +188,60 @@ final class Human_Card_Check_Pro {
             <?php if ($payment_link !== '' && empty($license['valid'])) : ?>
                 <p><a class="button button-primary" href="<?php echo esc_url($payment_link); ?>" target="_blank" rel="noopener noreferrer">Buy or renew Human Card Check Pro</a></p>
             <?php endif; ?>
+        </div>
+        <?php
+    }
+
+    private function render_admin_branding(): void {
+        $logo_url = plugin_dir_url(__FILE__) . 'assets/images/hcc-logo.PNG';
+        ?>
+        <style>
+            .hcc-pro-admin-brand {
+                display: flex;
+                align-items: center;
+                gap: 18px;
+                margin: 18px 0 24px;
+                padding: 20px 22px;
+                border: 1px solid #d8dee8;
+                border-radius: 20px;
+                background: linear-gradient(135deg, #fffef9 0%, #eef6ff 100%);
+                box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
+            }
+            .hcc-pro-admin-brand__logo {
+                width: 78px;
+                height: 78px;
+                border-radius: 22px;
+                object-fit: cover;
+                background: #fff;
+                box-shadow: 0 10px 22px rgba(15, 23, 42, 0.12);
+            }
+            .hcc-pro-admin-brand__eyebrow {
+                margin: 0 0 6px;
+                font-size: 12px;
+                font-weight: 700;
+                letter-spacing: .08em;
+                text-transform: uppercase;
+                color: #64748b;
+            }
+            .hcc-pro-admin-brand__title {
+                margin: 0 0 6px;
+                font-size: 24px;
+                line-height: 1.2;
+                color: #0f172a;
+            }
+            .hcc-pro-admin-brand__text {
+                margin: 0;
+                max-width: 760px;
+                color: #475569;
+            }
+        </style>
+        <div class="hcc-pro-admin-brand">
+            <img class="hcc-pro-admin-brand__logo" src="<?php echo esc_url($logo_url); ?>" alt="Human Card Check logo" />
+            <div>
+                <p class="hcc-pro-admin-brand__eyebrow">Le Labo d'Azertaf</p>
+                <h2 class="hcc-pro-admin-brand__title">Human Card Check Pro</h2>
+                <p class="hcc-pro-admin-brand__text">Advanced trust scoring, email and domain risk analysis, and automatic decisions to reduce low-quality registrations.</p>
+            </div>
         </div>
         <?php
     }
