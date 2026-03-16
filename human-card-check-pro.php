@@ -55,7 +55,7 @@ final class Human_Card_Check_Pro {
             [
                 'type' => 'string',
                 'sanitize_callback' => 'esc_url_raw',
-                'default' => 'https://trust.mapage.online',
+                'default' => 'https://trust.mapage-wp.online',
             ]
         );
 
@@ -171,7 +171,7 @@ final class Human_Card_Check_Pro {
                         <th scope="row"><label for="hcc_pro_service_url">Trust service URL</label></th>
                         <td>
                             <input type="url" class="regular-text" id="hcc_pro_service_url" name="<?php echo esc_attr(self::SERVICE_URL_OPTION); ?>" value="<?php echo esc_attr($this->get_service_url()); ?>" />
-                            <p class="description">Example: https://trust.mapage.online</p>
+                            <p class="description">Example: https://trust.mapage-wp.online</p>
                         </td>
                     </tr>
                     <tr>
@@ -470,8 +470,8 @@ final class Human_Card_Check_Pro {
     }
 
     private function get_service_url(): string {
-        $value = get_option(self::SERVICE_URL_OPTION, 'https://trust.mapage.online');
-        return is_string($value) && $value !== '' ? untrailingslashit($value) : 'https://trust.mapage.online';
+        $value = get_option(self::SERVICE_URL_OPTION, 'https://trust.mapage-wp.online');
+        return is_string($value) && $value !== '' ? untrailingslashit($value) : 'https://trust.mapage-wp.online';
     }
 
     private function get_service_key(): string {
