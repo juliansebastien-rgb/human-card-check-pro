@@ -183,7 +183,7 @@ final class Human_Card_Check_Pro {
             <?php if (!empty($license['message'])) : ?>
                 <p><?php echo esc_html($license['message']); ?></p>
             <?php endif; ?>
-            <p class="description">The Pro token is entered in Settings > Human Card Check.</p>
+            <p class="description">The license token is entered in Settings > Human Card Check.</p>
             <?php if ($payment_link !== '' && empty($license['valid'])) : ?>
                 <p><a class="button button-primary" href="<?php echo esc_url($payment_link); ?>" target="_blank" rel="noopener noreferrer">Buy or renew Human Card Check Pro</a></p>
             <?php endif; ?>
@@ -341,7 +341,7 @@ final class Human_Card_Check_Pro {
         if ($token === '') {
             return [
                 'valid' => false,
-                'message' => 'No Pro token found in Human Card Check settings.',
+                'message' => 'No license token found in Human Card Check settings.',
                 'plan' => '',
                 'checked_at' => gmdate('Y-m-d H:i:s'),
             ];
