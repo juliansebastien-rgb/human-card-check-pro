@@ -18,6 +18,7 @@ if (!defined('ABSPATH')) {
 
 final class Human_Card_Check_Pro {
     private const VERSION = '0.1.0';
+    private const DEFAULT_PAYMENT_LINK = 'https://buy.stripe.com/cNidR29Lz7OV8cN2Hj8k800';
     private const LOG_TABLE_SUFFIX = 'hcc_pro_logs';
     private const SERVICE_URL_OPTION = 'human_card_check_pro_service_url';
     private const SERVICE_KEY_OPTION = 'human_card_check_pro_service_key';
@@ -159,6 +160,7 @@ final class Human_Card_Check_Pro {
         }
 
         $license = $this->get_license_status();
+        $payment_link = $this->get_payment_link();
         ?>
         <div class="wrap">
             <h1>Human Card Check Pro</h1>
@@ -203,6 +205,9 @@ final class Human_Card_Check_Pro {
                 <p><?php echo esc_html($license['message']); ?></p>
             <?php endif; ?>
             <p class="description">The Pro token is entered in Settings > Human Card Check.</p>
+            <?php if ($payment_link !== '' && empty($license['valid'])) : ?>
+                <p><a class="button button-primary" href="<?php echo esc_url($payment_link); ?>" target="_blank" rel="noopener noreferrer">Buy or renew Human Card Check Pro</a></p>
+            <?php endif; ?>
         </div>
         <?php
     }
@@ -489,6 +494,12 @@ final class Human_Card_Check_Pro {
     private function get_free_plugin_token(): string {
         $value = get_option('human_card_check_pro_token', '');
         return is_string($value) ? trim($value) : '';
+    }
+
+    private function get_payment_link(): string {
+        $value = get_option('human_card_check_pro_payment_link', self::DEFAULT_PAYMENT_LINK);
+        $value = is_string($value) ? trim($value) : '';
+        return $value !== '' ? $value : self::DEFAULT_PAYMENT_LINK;
     }
 }
 
