@@ -3,7 +3,7 @@
  * Plugin Name: Human Card Check Pro
  * Plugin URI: https://github.com/juliansebastien-rgb/human-card-check
  * Description: Pro trust scoring addon for Human Card Check.
- * Version: 0.2.4
+ * Version: 0.2.5
  * Author: Le Labo d'Azertaf
  * Requires at least: 6.0
  * Requires PHP: 7.4
@@ -17,7 +17,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Human_Card_Check_Pro {
-    private const VERSION = '0.2.4';
+    private const VERSION = '0.2.5';
     private const DEFAULT_PAYMENT_LINK = 'https://buy.stripe.com/cNidR29Lz7OV8cN2Hj8k800';
     private const LOG_TABLE_SUFFIX = 'hcc_pro_logs';
     private const SERVICE_URL_OPTION = 'human_card_check_pro_service_url';
@@ -343,6 +343,7 @@ final class Human_Card_Check_Pro {
             'license_token' => $this->get_free_plugin_token(),
             'site_url' => home_url('/'),
             'site_name' => get_bloginfo('name'),
+            'pro_plugin_version' => self::VERSION,
             'context' => isset($payload['context']) ? (string) $payload['context'] : '',
             'user_email' => isset($payload['user_email']) ? (string) $payload['user_email'] : '',
             'user_login' => isset($payload['user_login']) ? (string) $payload['user_login'] : '',
@@ -412,6 +413,8 @@ final class Human_Card_Check_Pro {
                 'body' => wp_json_encode([
                     'license_token' => $token,
                     'site_url' => home_url('/'),
+                    'site_name' => get_bloginfo('name'),
+                    'pro_plugin_version' => self::VERSION,
                 ]),
             ]
         );
