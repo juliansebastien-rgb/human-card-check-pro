@@ -3,7 +3,7 @@
  * Plugin Name: Human Card Check Pro
  * Plugin URI: https://github.com/juliansebastien-rgb/human-card-check
  * Description: Pro trust scoring addon for Human Card Check.
- * Version: 0.2.6
+ * Version: 0.2.7
  * Author: Le Labo d'Azertaf
  * Requires at least: 6.0
  * Requires PHP: 7.4
@@ -17,7 +17,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Human_Card_Check_Pro {
-    private const VERSION = '0.2.6';
+    private const VERSION = '0.2.7';
     private const DEFAULT_PAYMENT_LINK = 'https://buy.stripe.com/cNidR29Lz7OV8cN2Hj8k800';
     private const LOG_TABLE_SUFFIX = 'hcc_pro_logs';
     private const SERVICE_URL_OPTION = 'human_card_check_pro_service_url';
@@ -150,7 +150,7 @@ final class Human_Card_Check_Pro {
             return;
         }
 
-        $license = $this->get_license_status();
+        $license = $this->get_license_status(true);
         $payment_link = $this->get_payment_link();
         ?>
         <div class="wrap">
@@ -393,9 +393,9 @@ final class Human_Card_Check_Pro {
     /**
      * @return array{valid:bool,message:string,plan:string,checked_at:string}
      */
-    private function get_license_status(): array {
-        $cached = get_transient(self::LICENSE_TRANSIENT);
-        if (is_array($cached)) {
+    private function get_license_status(bool $force_refresh = false): array {
+        $cached = $force_refresh ? false : get_transient(self::LICENSE_TRANSIENT);
+        if (!$force_refresh && is_array($cached)) {
             return $cached;
         }
 
