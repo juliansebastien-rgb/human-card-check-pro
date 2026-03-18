@@ -3,7 +3,7 @@
  * Plugin Name: Human Card Check Pro
  * Plugin URI: https://github.com/juliansebastien-rgb/human-card-check
  * Description: Pro trust scoring addon for Human Card Check.
- * Version: 0.2.5
+ * Version: 0.2.6
  * Author: Le Labo d'Azertaf
  * Requires at least: 6.0
  * Requires PHP: 7.4
@@ -17,7 +17,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Human_Card_Check_Pro {
-    private const VERSION = '0.2.5';
+    private const VERSION = '0.2.6';
     private const DEFAULT_PAYMENT_LINK = 'https://buy.stripe.com/cNidR29Lz7OV8cN2Hj8k800';
     private const LOG_TABLE_SUFFIX = 'hcc_pro_logs';
     private const SERVICE_URL_OPTION = 'human_card_check_pro_service_url';
@@ -33,10 +33,12 @@ final class Human_Card_Check_Pro {
         add_action('admin_init', [$this, 'register_settings']);
         add_action('admin_menu', [$this, 'register_admin_pages']);
         add_action('admin_notices', [$this, 'maybe_show_dependency_notice']);
+        add_action('update_option_human_card_check_pro_token', [$this, 'clear_license_status_cache'], 10, 3);
     }
 
     public function activate(): void {
         $this->create_log_table();
+        $this->clear_license_status_cache();
     }
 
     public function register_hooks(): void {
@@ -45,6 +47,10 @@ final class Human_Card_Check_Pro {
         }
 
         add_filter('human_card_check_pro_registration_decision', [$this, 'filter_registration_decision'], 10, 2);
+    }
+
+    public function clear_license_status_cache($old_value = null, $value = null, $option = null): void {
+        delete_transient(self::LICENSE_TRANSIENT);
     }
 
     public function register_settings(): void {
