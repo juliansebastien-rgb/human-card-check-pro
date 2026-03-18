@@ -3,7 +3,7 @@
  * Plugin Name: Human Card Check Pro
  * Plugin URI: https://github.com/juliansebastien-rgb/human-card-check
  * Description: Pro trust scoring addon for Human Card Check.
- * Version: 0.2.2
+ * Version: 0.2.4
  * Author: Le Labo d'Azertaf
  * Requires at least: 6.0
  * Requires PHP: 7.4
@@ -17,7 +17,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Human_Card_Check_Pro {
-    private const VERSION = '0.2.2';
+    private const VERSION = '0.2.4';
     private const DEFAULT_PAYMENT_LINK = 'https://buy.stripe.com/cNidR29Lz7OV8cN2Hj8k800';
     private const LOG_TABLE_SUFFIX = 'hcc_pro_logs';
     private const SERVICE_URL_OPTION = 'human_card_check_pro_service_url';
