@@ -3,7 +3,7 @@
  * Plugin Name: Human Card Check Pro
  * Plugin URI: https://github.com/juliansebastien-rgb/human-card-check
  * Description: Pro trust scoring addon for Human Card Check.
- * Version: 0.2.7
+ * Version: 0.2.8
  * Author: Le Labo d'Azertaf
  * Requires at least: 6.0
  * Requires PHP: 7.4
@@ -17,7 +17,7 @@ if (!defined('ABSPATH')) {
 }
 
 final class Human_Card_Check_Pro {
-    private const VERSION = '0.2.7';
+    private const VERSION = '0.2.8';
     private const DEFAULT_PAYMENT_LINK = 'https://buy.stripe.com/cNidR29Lz7OV8cN2Hj8k800';
     private const LOG_TABLE_SUFFIX = 'hcc_pro_logs';
     private const SERVICE_URL_OPTION = 'human_card_check_pro_service_url';
@@ -25,12 +25,15 @@ final class Human_Card_Check_Pro {
     private const REVIEW_SCORE_OPTION = 'human_card_check_pro_review_score';
     private const REQUEST_TIMEOUT_OPTION = 'human_card_check_pro_timeout';
     private const LICENSE_TRANSIENT = 'human_card_check_pro_license_status';
+    private const INSTALL_SYNC_TRANSIENT = 'human_card_check_pro_install_sync';
+    private const INSTALL_SYNC_TTL = 6 * HOUR_IN_SECONDS;
 
     public function boot(): void {
         register_activation_hook(__FILE__, [$this, 'activate']);
 
         add_action('plugins_loaded', [$this, 'register_hooks']);
         add_action('admin_init', [$this, 'register_settings']);
+        add_action('admin_init', [$this, 'maybe_sync_installation_with_trust']);
         add_action('admin_menu', [$this, 'register_admin_pages']);
         add_action('admin_notices', [$this, 'maybe_show_dependency_notice']);
         add_action('update_option_human_card_check_pro_token', [$this, 'clear_license_status_cache'], 10, 3);
@@ -39,6 +42,7 @@ final class Human_Card_Check_Pro {
     public function activate(): void {
         $this->create_log_table();
         $this->clear_license_status_cache();
+        delete_transient(self::INSTALL_SYNC_TRANSIENT);
     }
 
     public function register_hooks(): void {
@@ -51,6 +55,25 @@ final class Human_Card_Check_Pro {
 
     public function clear_license_status_cache($old_value = null, $value = null, $option = null): void {
         delete_transient(self::LICENSE_TRANSIENT);
+        delete_transient(self::INSTALL_SYNC_TRANSIENT);
+    }
+
+    public function maybe_sync_installation_with_trust(): void {
+        if (!$this->is_free_plugin_active()) {
+            return;
+        }
+
+        if (get_transient(self::INSTALL_SYNC_TRANSIENT)) {
+            return;
+        }
+
+        if ($this->get_free_plugin_token() === '') {
+            return;
+        }
+
+        $status = $this->get_license_status(true);
+        $ttl = !empty($status['valid']) ? self::INSTALL_SYNC_TTL : 15 * MINUTE_IN_SECONDS;
+        set_transient(self::INSTALL_SYNC_TRANSIENT, '1', $ttl);
     }
 
     public function register_settings(): void {
