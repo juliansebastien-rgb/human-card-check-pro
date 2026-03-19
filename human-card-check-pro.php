@@ -3,13 +3,14 @@
  * Plugin Name: Human Card Check Pro
  * Plugin URI: https://github.com/juliansebastien-rgb/human-card-check
  * Description: Pro trust scoring addon for Human Card Check.
- * Version: 0.2.8
+ * Version: 0.2.9
  * Author: Le Labo d'Azertaf
  * Requires at least: 6.0
  * Requires PHP: 7.4
  * License: GPL-2.0-or-later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: human-card-check-pro
+ * Update URI: https://github.com/juliansebastien-rgb/human-card-check-pro
  */
 
 if (!defined('ABSPATH')) {
@@ -17,7 +18,12 @@ if (!defined('ABSPATH')) {
 }
 
 final class Human_Card_Check_Pro {
-    private const VERSION = '0.2.8';
+    private const VERSION = '0.2.9';
+    private const TRANSIENT_PREFIX = 'human_card_check_pro_';
+    private const GITHUB_REPOSITORY = 'juliansebastien-rgb/human-card-check-pro';
+    private const GITHUB_API_BASE = 'https://api.github.com/repos/juliansebastien-rgb/human-card-check-pro';
+    private const GITHUB_REPOSITORY_URL = 'https://github.com/juliansebastien-rgb/human-card-check-pro';
+    private const UPDATE_CACHE_TTL = HOUR_IN_SECONDS;
     private const DEFAULT_PAYMENT_LINK = 'https://buy.stripe.com/cNidR29Lz7OV8cN2Hj8k800';
     private const LOG_TABLE_SUFFIX = 'hcc_pro_logs';
     private const SERVICE_URL_OPTION = 'human_card_check_pro_service_url';
@@ -37,6 +43,10 @@ final class Human_Card_Check_Pro {
         add_action('admin_menu', [$this, 'register_admin_pages']);
         add_action('admin_notices', [$this, 'maybe_show_dependency_notice']);
         add_action('update_option_human_card_check_pro_token', [$this, 'clear_license_status_cache'], 10, 3);
+        add_filter('pre_set_site_transient_update_plugins', [$this, 'inject_github_update']);
+        add_filter('plugins_api', [$this, 'filter_plugin_information'], 20, 3);
+        add_filter('upgrader_source_selection', [$this, 'normalize_github_update_source'], 10, 4);
+        add_action('upgrader_process_complete', [$this, 'clear_update_cache'], 10, 2);
     }
 
     public function activate(): void {
@@ -166,6 +176,202 @@ final class Human_Card_Check_Pro {
         }
 
         echo '<div class="notice notice-error"><p>Human Card Check Pro requires the Human Card Check plugin to be active.</p></div>';
+    }
+
+    public function inject_github_update($transient) {
+        if (!is_object($transient) || empty($transient->checked)) {
+            return $transient;
+        }
+
+        $release = $this->get_github_release_data();
+        if (!$release || empty($release['version'])) {
+            return $transient;
+        }
+
+        if (version_compare(self::VERSION, $release['version'], '>=')) {
+            return $transient;
+        }
+
+        $plugin_file = plugin_basename(__FILE__);
+        $update = (object) [
+            'slug' => 'human-card-check-pro',
+            'plugin' => $plugin_file,
+            'new_version' => $release['version'],
+            'url' => $release['url'],
+            'package' => $release['package'],
+            'icons' => [],
+            'banners' => [],
+            'banners_rtl' => [],
+            'tested' => '6.9',
+            'requires_php' => '7.4',
+            'compatibility' => new stdClass(),
+        ];
+
+        $transient->response[$plugin_file] = $update;
+
+        return $transient;
+    }
+
+    public function filter_plugin_information($result, string $action, $args) {
+        if ($action !== 'plugin_information' || !is_object($args) || empty($args->slug) || $args->slug !== 'human-card-check-pro') {
+            return $result;
+        }
+
+        $release = $this->get_github_release_data();
+
+        if (!$release) {
+            return $result;
+        }
+
+        return (object) [
+            'name' => 'Human Card Check Pro',
+            'slug' => 'human-card-check-pro',
+            'version' => $release['version'],
+            'author' => '<a href="https://github.com/juliansebastien-rgb">Le Labo d&#039;Azertaf</a>',
+            'author_profile' => 'https://github.com/juliansebastien-rgb',
+            'homepage' => self::GITHUB_REPOSITORY_URL,
+            'requires' => '6.0',
+            'requires_php' => '7.4',
+            'tested' => '6.9',
+            'last_updated' => $release['published_at'],
+            'download_link' => $release['package'],
+            'sections' => [
+                'description' => 'Pro trust scoring addon for Human Card Check.',
+                'installation' => 'Install and activate Human Card Check first, then install Human Card Check Pro. Enter your license token in Settings > Human Card Check and configure the Pro options in Settings > Human Card Check Pro.',
+                'changelog' => sprintf("= %s =\n* GitHub release package.\n", $release['version']),
+            ],
+            'banners' => [],
+            'icons' => [],
+        ];
+    }
+
+    public function clear_update_cache($upgrader, array $hook_extra): void {
+        if (($hook_extra['type'] ?? '') !== 'plugin') {
+            return;
+        }
+
+        $plugins = $hook_extra['plugins'] ?? [];
+
+        if (in_array(plugin_basename(__FILE__), $plugins, true)) {
+            delete_transient(self::TRANSIENT_PREFIX . 'github_release');
+        }
+    }
+
+    public function normalize_github_update_source(string $source, string $remote_source, $upgrader, array $hook_extra): string {
+        if (($hook_extra['type'] ?? '') !== 'plugin') {
+            return $source;
+        }
+
+        $plugins = $hook_extra['plugins'] ?? [];
+        if (!in_array(plugin_basename(__FILE__), $plugins, true)) {
+            return $source;
+        }
+
+        $normalized = trailingslashit($remote_source) . 'human-card-check-pro';
+
+        if ($source === $normalized || !is_dir($source)) {
+            return $source;
+        }
+
+        if (@rename($source, $normalized)) {
+            return $normalized;
+        }
+
+        return $source;
+    }
+
+    private function get_github_release_data(): ?array {
+        $cache_key = self::TRANSIENT_PREFIX . 'github_release';
+        $cached = get_transient($cache_key);
+
+        if (is_array($cached)) {
+            return $cached;
+        }
+
+        $release = $this->request_github_release('/releases/latest');
+
+        if (!$release) {
+            $tag = $this->request_github_release('/tags');
+            if (!$tag || empty($tag[0]['name'])) {
+                return null;
+            }
+
+            $first_tag = $tag[0];
+            $release = [
+                'tag_name' => $first_tag['name'],
+                'zipball_url' => self::GITHUB_API_BASE . '/zipball/' . rawurlencode($first_tag['name']),
+                'html_url' => self::GITHUB_REPOSITORY_URL . '/releases/tag/' . rawurlencode($first_tag['name']),
+                'published_at' => gmdate('Y-m-d H:i:s'),
+                'body' => '',
+            ];
+        }
+
+        if (empty($release['tag_name'])) {
+            return null;
+        }
+
+        $package = '';
+        if (!empty($release['assets']) && is_array($release['assets'])) {
+            foreach ($release['assets'] as $asset) {
+                if (!is_array($asset)) {
+                    continue;
+                }
+
+                $name = isset($asset['name']) ? (string) $asset['name'] : '';
+                $download = isset($asset['browser_download_url']) ? (string) $asset['browser_download_url'] : '';
+
+                if ($name !== '' && substr($name, -4) === '.zip' && $download !== '') {
+                    $package = $download;
+                    break;
+                }
+            }
+        }
+
+        if ($package === '' && !empty($release['zipball_url'])) {
+            $package = (string) $release['zipball_url'];
+        }
+
+        if ($package === '') {
+            return null;
+        }
+
+        $data = [
+            'version' => ltrim((string) $release['tag_name'], 'v'),
+            'package' => $package,
+            'url' => !empty($release['html_url']) ? (string) $release['html_url'] : self::GITHUB_REPOSITORY_URL,
+            'published_at' => !empty($release['published_at']) ? gmdate('Y-m-d H:i:s', strtotime((string) $release['published_at'])) : gmdate('Y-m-d H:i:s'),
+            'body' => !empty($release['body']) ? (string) $release['body'] : '',
+        ];
+
+        set_transient($cache_key, $data, self::UPDATE_CACHE_TTL);
+
+        return $data;
+    }
+
+    private function request_github_release(string $path) {
+        $response = wp_remote_get(
+            self::GITHUB_API_BASE . $path,
+            [
+                'timeout' => 15,
+                'headers' => [
+                    'Accept' => 'application/vnd.github+json',
+                    'User-Agent' => 'Human Card Check Pro/' . self::VERSION . '; ' . home_url('/'),
+                ],
+            ]
+        );
+
+        if (is_wp_error($response)) {
+            return null;
+        }
+
+        $code = (int) wp_remote_retrieve_response_code($response);
+        if ($code < 200 || $code >= 300) {
+            return null;
+        }
+
+        $data = json_decode((string) wp_remote_retrieve_body($response), true);
+
+        return is_array($data) ? $data : null;
     }
 
     public function render_settings_page(): void {
